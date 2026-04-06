@@ -1,5 +1,4 @@
-#include "../includes/config.hpp"
-#include <sys/epoll.h>
+#include "../includes/Socket/Socket.hpp"
 
 int main(int argc, char**argv)
 {

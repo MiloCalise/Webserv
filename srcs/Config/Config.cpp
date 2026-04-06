@@ -1,6 +1,4 @@
-#include "../includes/config.hpp"
-#include <fstream>
-#include <string>
+#include "../../includes/Socket/Socket.hpp"
 
 Config::Config() {}
 
