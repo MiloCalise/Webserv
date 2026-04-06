@@ -11,11 +11,15 @@ ServerParsing::~ServerParsing() {}
 
 void    ServerParsing::parse()
 {
-    ServerConfig current_server;
-    get();
-    expect("{");
-    while (peek() != "}") {
-        std::string directive = get();
+    while (_pos < _tokens.size())
+    {
+        std::string token = get();
+        if (token == "server")
+        {
+            ServerConfig current_server;
+            expect("{");
+            while (peek() != "}") {
+                std::string directive = get();
         if (directive == "listen")
         {
             current_server._port = std::atoi(get().c_str());
@@ -46,9 +50,15 @@ void    ServerParsing::parse()
         {
             throw std::runtime_error("Error: unknown directive");
         }
+            }
+            expect("}");
+            this->_servers.push_back(current_server);
+        }
+        else
+        {
+            throw std::runtime_error("Error: expected 'server' block");
+        }
     }
-    expect("}");
-    this->_servers.push_back(current_server);
 }
 
 const std::vector<ServerConfig>& ServerParsing::getServers() const

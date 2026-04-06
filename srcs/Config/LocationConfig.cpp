@@ -1,6 +1,6 @@
 #include "../../includes/Config/LocationConfig.hpp"
 
-LocationConfig::LocationConfig(std::string path) : _path(path) {}
+LocationConfig::LocationConfig(std::string path) : _path(path), _autoindex(false) {}
 
 LocationConfig::~LocationConfig() {}
 
