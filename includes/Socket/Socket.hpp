@@ -1,8 +1,9 @@
 #pragma once
 
 #include "../Config/Config.hpp"
+#include <unistd.h>
 
-class   Socket : public Config
+class   Socket
 {
     private:
         // constructeurs dans private pour interdire leur instanciation
@@ -13,6 +14,6 @@ class   Socket : public Config
         int                     _sock;
 
     public:
-        Socket();
+        Socket(const Config& conf);
         ~Socket();
 };

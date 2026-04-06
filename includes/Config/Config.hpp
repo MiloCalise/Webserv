@@ -10,12 +10,13 @@
 
 class Config
 {
+    friend class Socket;
+
     private:
         // constructeurs dans private pour interdire leur instanciation
         Config(const Config& copy);
         Config& operator=(const Config& copy);
-    protected:
-    std::vector<ServerConfig> _servers;
+        std::vector<ServerConfig> _servers;
     public:
         Config();
         ~Config();

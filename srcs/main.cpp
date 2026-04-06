@@ -9,6 +9,8 @@ int main(int argc, char**argv)
     {
         config->parseConfig(argv[1]);
         config->printConfig();
+        Socket  socket(*config);
+        std::cout << "Socket Successfull" << std::endl;
     }
     catch (std::exception& e)
     {
