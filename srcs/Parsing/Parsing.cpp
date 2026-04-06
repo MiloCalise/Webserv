@@ -28,6 +28,7 @@ void Parsing::expect(const std::string& token) {
         throw std::runtime_error("Unexpected tokken");
 }
 
+// parse le fichier entier en tokken utilisables
 void    Parsing::tokenize(const std::string& content)
 {
     std::string current;
@@ -72,6 +73,7 @@ void    Parsing::tokenize(const std::string& content)
             _tokens.push_back(current);
 }
 
+// open le fichier pour parser
 void    Parsing::openFile()
 {
     std::ifstream       file(_path.c_str(), std::ifstream::in);

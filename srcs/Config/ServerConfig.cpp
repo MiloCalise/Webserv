@@ -13,12 +13,13 @@ void ServerConfig::addLocation(const LocationConfig& location)
     _locations.push_back(location);
 }
 
+// print la partie server
 void ServerConfig::print() const
 {
     std::cout << "Server Name: " << _server_name << std::endl;
     std::cout << "Port: " << _port << std::endl;
     std::cout << "Client Max Body Size: " << _client_max_body << std::endl;
-    
+
     if (!_error_pages.empty())
     {
         std::cout << "Error Pages:" << std::endl;

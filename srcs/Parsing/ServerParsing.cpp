@@ -9,6 +9,7 @@ ServerParsing::ServerParsing(const std::string& path) : LocationParsing(path)
 
 ServerParsing::~ServerParsing() {}
 
+// parsing pour la partie server du conf
 void    ServerParsing::parse()
 {
     while (_pos < _tokens.size())
@@ -68,6 +69,5 @@ const std::vector<ServerConfig>& ServerParsing::getServers() const
 
 void ServerParsing::parse(ServerConfig& current_serv)
 {
-    // Implementation not needed here as it's handled by LocationParsing
     (void)current_serv;
 }

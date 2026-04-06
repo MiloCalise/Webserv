@@ -7,6 +7,7 @@ LocationParsing::~LocationParsing() {}
 
 void LocationParsing::parse() {}
 
+// parsing de la partie location du conf
 void LocationParsing::parse(ServerConfig& current_server)
 {
     std::string loc_path = get();

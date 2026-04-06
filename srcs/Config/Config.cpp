@@ -11,6 +11,7 @@ void Config::parseConfig(const std::string& file)
     _servers = parser.getServers();
 }
 
+// print la config entiere
 void Config::printConfig() const
 {
     std::cout << "=== Configuration ===" << std::endl;
