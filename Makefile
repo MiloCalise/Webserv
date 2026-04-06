@@ -2,7 +2,14 @@ NAME		= webserv
 CPP			= c++
 CPPFLAGS	= -Wall -Wextra -Werror -std=c++98 -Iincludes -g3
 
-SRCS		= srcs/main.cpp srcs/Config.cpp srcs/Socket.cpp
+SRCS		= srcs/main.cpp \
+			  srcs/Socket/Socket.cpp \
+			  srcs/Config/Config.cpp \
+			  srcs/Config/LocationConfig.cpp \
+			  srcs/Config/ServerConfig.cpp \
+			  srcs/Parsing/Parsing.cpp \
+			  srcs/Parsing/ServerParsing.cpp \
+			  srcs/Parsing/LocationParsing.cpp
 
 OBJS_DIR	= objs
 OBJS		= $(SRCS:srcs/%.cpp=$(OBJS_DIR)/%.o)
@@ -12,11 +19,9 @@ all: $(NAME)
 $(NAME): $(OBJS)
 	$(CPP) $(CPPFLAGS) $(OBJS) -o $(NAME)
 
-$(OBJS_DIR)/%.o: srcs/%.cpp | $(OBJS_DIR)
+$(OBJS_DIR)/%.o: srcs/%.cpp
+	@mkdir -p $(dir $@)
 	$(CPP) $(CPPFLAGS) -c $< -o $@
-
-$(OBJS_DIR):
-	mkdir -p $(OBJS_DIR)
 
 clean:
 	rm -rf $(OBJS_DIR)

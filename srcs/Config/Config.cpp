@@ -1,21 +1,24 @@
-#include "../../includes/Socket/Socket.hpp"
+#include "../../includes/Config/Config.hpp"
+#include "../../includes/Parsing/ServerParsing.hpp"
 
 Config::Config() {}
 
 Config::~Config() {}
 
-void    Config::parseConfig(const std::string& conf)
+void Config::parseConfig(const std::string& file)
 {
-    std::ifstream   file;
-    std::string     buff;
+    ServerParsing parser(file);
+    _servers = parser.getServers();
+}
 
-    file.open(conf.c_str(), std::ifstream::in);
-    if (!file.is_open())
-        throw std::runtime_error("Could not open config file");
-    while (file.good())
-        {
-            std::getline(file, buff);
-            // parser chaque ligne et mettre dans la classe
-        }
-    file.close();
+void Config::printConfig() const
+{
+    std::cout << "=== Configuration ===" << std::endl;
+    std::cout << "Servers configured: " << _servers.size() << std::endl;
+    std::cout << "=====================" << std::endl;
+    for (size_t i = 0; i < _servers.size(); ++i)
+    {
+        std::cout << "Server [" << i << "]:" << std::endl;
+        _servers[i].print();
+    }
 }

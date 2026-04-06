@@ -1,0 +1,63 @@
+#include "../../includes/Parsing/ServerParsing.hpp"
+#include <cstdlib>
+#include <stdexcept>
+
+ServerParsing::ServerParsing(const std::string& path) : LocationParsing(path)
+{
+    parse();
+}
+
+ServerParsing::~ServerParsing() {}
+
+void    ServerParsing::parse()
+{
+    ServerConfig current_server;
+    get();
+    expect("{");
+    while (peek() != "}") {
+        std::string directive = get();
+        if (directive == "listen")
+        {
+            current_server._port = std::atoi(get().c_str());
+            expect(";");
+        }
+        else if (directive == "server_name")
+        {
+            current_server._server_name = get();
+            expect(";");
+        }
+        else if (directive == "error_page")
+        {
+            int code = std::atoi(get().c_str());
+            std::string page = get();
+            current_server._error_pages[code] = page;
+            expect(";");
+        }
+        else if (directive == "client_max_body_size")
+        {
+            current_server._client_max_body = std::atoi(get().c_str());
+            expect(";");
+        }
+        else if (directive == "location")
+        {
+            LocationParsing::parse(current_server);
+        }
+        else
+        {
+            throw std::runtime_error("Error: unknown directive");
+        }
+    }
+    expect("}");
+    this->_servers.push_back(current_server);
+}
+
+const std::vector<ServerConfig>& ServerParsing::getServers() const
+{
+    return this->_servers;
+}
+
+void ServerParsing::parse(ServerConfig& current_serv)
+{
+    // Implementation not needed here as it's handled by LocationParsing
+    (void)current_serv;
+}

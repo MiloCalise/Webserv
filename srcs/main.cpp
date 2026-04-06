@@ -8,6 +8,7 @@ int main(int argc, char**argv)
     try
     {
         config->parseConfig(argv[1]);
+        config->printConfig();
     }
     catch (std::exception& e)
     {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ServerConfig.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -14,13 +15,10 @@ class Config
         Config(const Config& copy);
         Config& operator=(const Config& copy);
     protected:
-        int             _backlog;
-        unsigned long   _interface;
-        int             _port;
-        std::string     _name;
-        // etc..
+    std::vector<ServerConfig> _servers;
     public:
         Config();
         ~Config();
         void    parseConfig(const std::string& file);
+        void    printConfig() const;
 };
