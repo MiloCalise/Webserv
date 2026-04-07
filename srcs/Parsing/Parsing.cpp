@@ -34,43 +34,51 @@ void    Parsing::tokenize(const std::string& content)
     std::string current;
     bool comment = 0;
 
-        for (size_t i = 0; i < content.size(); i++) {
+        for (size_t i = 0; i < content.size(); i++)
+        {
             char c = content[i];
 
-            if (comment) {
+            if (comment)
+            {
                 if (c == '\n')
                     comment = false;
                 continue ;
             }
 
-            if (c == '#') {
+            if (c == '#')
+            {
                 comment = true;
-                if (!current.empty()) {
+                if (!current.empty())
+                {
                     _tokens.push_back(current);
                     current.clear();
                 }
                 continue ;
             }
-
-            if (std::isspace(c)) {
-                if (!current.empty()) {
+            if (std::isspace(c))
+            {
+                if (!current.empty())
+                {
                     _tokens.push_back(current);
                     current.clear();
                 }
             }
-            else if (c == '{' || c == '}' || c == ';') {
-                if (!current.empty()) {
+            else if (c == '{' || c == '}' || c == ';')
+            {
+                if (!current.empty())
+                {
                     _tokens.push_back(current);
                     current.clear();
                 }
                 _tokens.push_back(std::string(1, c));
             }
-            else {
+            else
                 current += c;
-            }
         }
         if (!current.empty())
             _tokens.push_back(current);
+        else if (_tokens.empty() && current.empty())
+            throw std::runtime_error("Empty file");
 }
 
 // open le fichier pour parser

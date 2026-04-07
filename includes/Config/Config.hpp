@@ -11,6 +11,7 @@
 class Config
 {
     friend class Socket;
+    friend class Server;
 
     private:
         // constructeurs dans private pour interdire leur instanciation

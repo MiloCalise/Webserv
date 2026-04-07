@@ -1,10 +1,11 @@
 #include "../../includes/Socket/Socket.hpp"
+#include <sys/socket.h>
 
-Socket::Socket(const Config& conf) : _sock(-1)
+Socket::Socket(const ServerConfig& conf) : _sock(-1)
 {
     //creation du socket et de la struct address
     _address.sin_family = AF_INET;
-    _address.sin_port = htons(conf._servers[0]._port);
+    _address.sin_port = htons(conf._port);
     _address.sin_addr.s_addr = htonl(INADDR_ANY);
     _sock = socket(AF_INET, SOCK_STREAM, 0);
     if (_sock == -1)
@@ -15,12 +16,15 @@ Socket::Socket(const Config& conf) : _sock(-1)
         close(_sock);
         throw std::runtime_error("Could not bind socket");
     }
-    if (listen(_sock, conf._servers[0]._client_max_body) == -1)
+    if (listen(_sock, SOMAXCONN) == -1)
     {
         close(_sock);
         throw std::runtime_error("Could not listen on socket");
     }
-    close(_sock);
 }
 
-Socket::~Socket() {}
+Socket::~Socket()
+{
+    if (_sock != -1)
+        close(_sock);
+}

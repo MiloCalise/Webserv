@@ -9,7 +9,8 @@ SRCS		= srcs/main.cpp \
 			  srcs/Config/ServerConfig.cpp \
 			  srcs/Parsing/Parsing.cpp \
 			  srcs/Parsing/ServerParsing.cpp \
-			  srcs/Parsing/LocationParsing.cpp
+			  srcs/Parsing/LocationParsing.cpp \
+			  srcs/Server/Server.cpp
 
 OBJS_DIR	= objs
 OBJS		= $(SRCS:srcs/%.cpp=$(OBJS_DIR)/%.o)

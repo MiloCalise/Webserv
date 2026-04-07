@@ -13,6 +13,7 @@ class ServerConfig
     friend class ServerParsing;
     friend class LocationParsing;
     friend class Socket;
+    friend class Server;
 
     protected :
         int                             _port;

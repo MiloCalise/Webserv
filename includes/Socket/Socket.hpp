@@ -5,6 +5,7 @@
 
 class   Socket
 {
+    friend class Server;
     private:
         // constructeurs dans private pour interdire leur instanciation
         Socket(const Socket& copy);
@@ -14,6 +15,6 @@ class   Socket
         int                     _sock;
 
     public:
-        Socket(const Config& conf);
+        Socket(const ServerConfig& conf);
         ~Socket();
 };
