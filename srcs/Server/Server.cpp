@@ -16,6 +16,7 @@ void    Server::startServers(const Config& conf)
     for (unsigned long i = 0; i < conf._servers.size(); i++)
     {
         Socket  *s = new Socket(conf._servers[i]);
+        _listen_fds.insert(s->_sock);
         _sockets.push_back(s);
     }
     // argument de create ignore
@@ -34,5 +35,11 @@ void    Server::startServers(const Config& conf)
 
 void    Server::startLoop()
 {
-
+    struct epoll_event events[64];
+    while (1)
+    {
+        int nb = epoll_wait(_epoll_fd, events, 64, 100000);
+        if (nb == -1)
+            throw std::runtime_error("Error in epoll_wait");
+    }
 }
