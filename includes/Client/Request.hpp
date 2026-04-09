@@ -21,4 +21,6 @@ class Request
     public:
         Request();
         ~Request();
+
+        bool    Parse(const std::string& raw);
 };
