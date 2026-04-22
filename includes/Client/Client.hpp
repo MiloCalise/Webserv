@@ -7,8 +7,6 @@ class   Client
 {
     friend class Server;
     private:
-        Client(const Client& copy);
-        Client& operator=(const Client& copy);
 
         int             _fd;
         ServerConfig    *_config;
@@ -21,6 +19,8 @@ class   Client
     public:
         Client();
         Client(int fd, ServerConfig *conf);
+        Client(const Client& copy);
+        Client& operator=(const Client& copy);
         ~Client();
 
         void                appendToReadBuffer(const std::string& data);

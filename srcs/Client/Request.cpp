@@ -1,34 +1,65 @@
 #include "../../includes/Server/Server.hpp"
 #include <cstddef>
+#include <cstdlib>
 #include <string>
 
 Request::Request() : _content_length(0), _complete(false), _parsed_header(false) {}
 
+Request::Request(const Request& copy) : _method(copy._method), _path(copy._path), _version(copy._version), _headers(copy._headers), _body(copy._body), _content_length(copy._content_length), _complete(copy._complete), _parsed_header(copy._parsed_header) {}
+
+Request& Request::operator=(const Request& copy)
+{
+    if (this == &copy)
+        return *this;
+    _method         = copy._method;
+    _path           = copy._path;
+    _version        = copy._version;
+    _headers        = copy._headers;
+    _body           = copy._body;
+    _complete       = copy._complete;
+    _parsed_header  = copy._parsed_header;
+    _content_length = copy._content_length;
+    return *this;
+}
+
 Request::~Request() {}
 
-bool    Request::Parse(const std::string& raw)
+bool Request::Parse(const std::string& raw)
 {
     if (!_parsed_header)
     {
-        size_t  header_end = raw.find("\r\n\r\n");
+        size_t header_end = raw.find("\r\n\r\n");
+        size_t skip = 4;
+
         if (header_end == std::string::npos)
-                  return false;
-        std::string header = raw.substr(0, header_end);
-        size_t  firstline_end = header.find("\r\n");
-        if (firstline_end == std::string::npos)
+        {
+            header_end = raw.find("\n\n");
+            skip = 2;
+        }
+        if (header_end == std::string::npos)
             return false;
-        if (!_parseRequestLine(header.substr(0, firstline_end)))
+        std::string header_section = raw.substr(0, header_end);
+        size_t first_line_end = header_section.find("\r\n");
+        if (first_line_end == std::string::npos)
+            first_line_end = header_section.find("\n");
+        if (first_line_end == std::string::npos)
             return false;
-        if (!_parseHeaders(header.substr(firstline_end + 2)))
+        if (!_parseRequestLine(header_section.substr(0, first_line_end)))
+            return false;
+        size_t headers_start = first_line_end;
+        if (raw[headers_start] == '\r') headers_start++;
+        headers_start++;
+        if (!_parseHeaders(header_section.substr(headers_start)))
             return false;
         _parsed_header = true;
-        if (_headers.count("Content-Length"))
-            _content_length = std::stoul(_headers["Content-Length"]);
-    }
-    else
-    {
-        size_t body_start = raw.find("\r\n\r\n") + 4;
-        std::string body = raw.substr(body_start);
+        if (_headers.count("content-length"))
+            _content_length = std::atol(_headers["content-length"].c_str());
+        if (_content_length == 0)
+        {
+            _complete = true;
+            return true;
+        }
+        std::string body = raw.substr(header_end + skip);
         if (body.size() >= _content_length)
         {
             _body = body.substr(0, _content_length);

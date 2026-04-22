@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Profile</title>
+    <style>
+		/*je sais pas pourquoi quand je cré un fichier*/
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #333745;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        div#main {
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+        }
+
+        div#links {
+            display: flex;
+            flex-direction: column;
+            color: #333745;
+            background-color: #E0D3DE;
+            border-radius: 10px 10px 10px 10px;
+            padding: 25px;
+            gap: 4px;
+        }
+
+        
+        h1 {
+            background-color: #E0D3DE;
+            color: #333745;
+            padding: 20px 30px;
+            border-radius: 10px 10px 0 0;
+            font-size: 2rem;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        ul {
+            background-color: white;
+            padding: 20px 30px;
+            border-radius: 0 0 10px 10px;
+            list-style: none;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        li {
+            padding: 10px 0;
+            font-size: 1.1rem;
+            color: #333745;
+            border-bottom: 1px solid #E0D3DE;
+        }
+
+        li:last-child {
+            border-bottom: none;
+        }
+
+        li:first-child,
+        li:last-child {
+            color: #9D69A3;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="main">
+        <div>
+            <h1>Hello {{username}} !</h1>
+            <ul>
+                <li>first name: {{first_name}}</li>
+                <li>last name: {{last_name}}</li>
+            </ul>
+        </div>
+
+        <div id="links">
+            <!-- page -> upload_file -->
+            <p>• Click <a href="/upload_file">here</a> to upload files !</p>
+
+            <p>
+                • <a href="/random_page">Page that does not exist</a>
+            </p>
+
+            <p>
+                • <a href="/cgi-bin/infinit.php">CGI infinit loop</a> (return internal server error 504)
+            </p>
+
+        </div>
+    </div>
+
+</body>
+</html>

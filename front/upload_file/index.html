@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Upload File</title>
+
+    <style>
+        body {
+            background-color: #333745;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 40px;
+        }
+
+        .UploadFileText h1 {
+            font-weight: bold;
+            color: #040D04;
+            background-color: #E0D3DE;
+            padding: 15px;
+            border-radius: 12px;
+            width: 280px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .custom-file-upload {
+            width: 280px;
+            padding: 12px 15px;
+            border-radius: 10px;
+            background-color: #1C1C1E;
+            color: white;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            text-align: left;
+            display: block;
+        }
+
+        .custom-file-upload:hover {
+            background-color: #2a2a2c;
+        }
+
+        button {
+            font-weight: bold;
+            color: #040D04;
+            background-color: #E0D3DE;
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            width: 140px;
+        }
+
+        button:hover {
+            background-color: #d2c4cf;
+        }
+    </style>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+
+    <div class="UploadFileText">
+        <h1>Upload file form</h1>
+    </div>
+
+    <form method="post" action="/upload_file_script" enctype="multipart/form-data">
+        
+        <label for="file-upload" class="custom-file-upload">
+            <center>
+                Select file
+            </center>
+            
+        </label>
+        <input id="file-upload" name="file" type="file" required>
+
+        <button type="submit">Upload</button>
+    </form>
+
+</body>
+</html>

@@ -1,20 +1,26 @@
 #include "../includes/Server/Server.hpp"
 
-int main(int argc, char**argv)
+int main(int argc, char **argv)
 {
     if (argc != 2)
-        return (std::cerr << "Usage : A single config file\n", 1);
-    Config  *config = new Config();
-    Server  *server = new Server();
+    {
+        std::cerr << "Usage: ./webserv [configuration file]" << std::endl;
+        return 1;
+    }
+
     try
     {
-        config->parseConfig(argv[1]);
-        server->startServers(*config);
+        Config  conf;
+        conf.parseConfig(argv[1]);
+
+        Server  server;
+        server.startServers(conf);
+        server.startLoop();
     }
-    catch (std::exception& e)
+    catch (const std::exception& e)
     {
-        std::cerr << e.what() << std::endl;
-        return (delete(config), delete(server), 1);
+        std::cerr << "Fatal error: " << e.what() << std::endl;
+        return 1;
     }
-    return (delete(config), delete(server), 0);
+    return 0;
 }

@@ -10,7 +10,10 @@ SRCS		= srcs/main.cpp \
 			  srcs/Parsing/Parsing.cpp \
 			  srcs/Parsing/ServerParsing.cpp \
 			  srcs/Parsing/LocationParsing.cpp \
-			  srcs/Server/Server.cpp
+			  srcs/Server/Server.cpp \
+			  srcs/Server/Response.cpp \
+			  srcs/Client/Client.cpp \
+			  srcs/Client/Request.cpp
 
 OBJS_DIR	= objs
 OBJS		= $(SRCS:srcs/%.cpp=$(OBJS_DIR)/%.o)

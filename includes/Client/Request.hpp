@@ -9,9 +9,8 @@ class Request
 {
     friend class Client;
     friend class Server;
+    friend class Response;
     private:
-        Request(const Request& copy);
-        Request& operator=(const Request& copy);
         std::string                         _method;
         std::string                         _path;
         std::string                         _version;
@@ -28,6 +27,8 @@ class Request
 
     public:
         Request();
+        Request(const Request& copy);
+        Request& operator=(const Request& copy);
         ~Request();
 
         bool    Parse(const std::string& raw);

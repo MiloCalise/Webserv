@@ -1,10 +1,26 @@
 #include "../../includes/Client/Client.hpp"
 
-Client::Client() :
-    _fd(-1), _config(NULL), _bytes_sent(0), _last_activity(time(NULL)) {}
+Client::Client() : _fd(-1), _config(NULL), _last_activity(time(NULL)), _bytes_sent(0) {}
 
-Client::Client(int fd, ServerConfig* config) :
-    _fd(fd), _config(config), _bytes_sent(0), _last_activity(time(NULL)) {}
+Client::Client(int fd, ServerConfig* config) : _fd(fd), _config(config), _last_activity(time(NULL)), _bytes_sent(0) {}
+
+Client::Client(const Client& copy) : _fd(copy._fd), _config(copy._config), _last_activity(copy._last_activity), _read_buffer(copy._read_buffer), _write_buffer(copy._write_buffer), _bytes_sent(copy._bytes_sent), _request(copy._request) {}
+
+Client& Client::operator=(const Client& copy)
+{
+    if (this == &copy)
+        return *this;
+    _fd            = copy._fd;
+    _config        = copy._config;
+    _read_buffer   = copy._read_buffer;
+    _request       = copy._request;
+    _write_buffer  = copy._write_buffer;
+    _bytes_sent    = copy._bytes_sent;
+    _last_activity = copy._last_activity;
+    return *this;
+}
+
+Client::~Client() {}
 
 void Client::appendToReadBuffer(const std::string& data)
 {
