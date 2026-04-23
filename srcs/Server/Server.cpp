@@ -1,7 +1,7 @@
 #include "../../includes/Server/Server.hpp"
 #include <sys/epoll.h>
 
-Server::Server() : _epoll_fd(-1) {}
+Server::Server() : _epoll_fd(-1), _isRunning(false) {}
 
 Server::~Server()
 {
@@ -37,11 +37,16 @@ void    Server::startServers(Config& conf)
 void    Server::startLoop()
 {
     struct epoll_event events[64];
+    _isRunning = true;
     while (1)
     {
         int nb = epoll_wait(_epoll_fd, events, 64, -1);
         if (nb == -1)
+        {
+            if (errno == EINTR)
+                return ;
             throw std::runtime_error("Error in epoll wait");
+        }
         for (int i = 0; i < nb; i++)
         {
             int fd = events[i].data.fd;
@@ -56,6 +61,30 @@ void    Server::startLoop()
         }
         _checkTimeouts();
     }
+    cleanup();
+}
+
+void Server::cleanup()
+{
+    for (std::map<int,Client>::iterator it = _clients.begin();
+         it != _clients.end(); ++it)
+    {
+        epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, it->first, NULL);
+        close(it->first);
+    }
+    _clients.clear();
+    for (size_t i = 0; i < _sockets.size(); i++)
+    {
+        epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, _sockets[i]->_sock, NULL);
+        delete _sockets[i];
+    }
+    _sockets.clear();
+    if (_epoll_fd != -1)
+    {
+        close(_epoll_fd);
+        _epoll_fd = -1;
+    }
+    std::cerr << "Server stopped cleanly" << std::endl;
 }
 
 void Server::_checkTimeouts()
@@ -138,7 +167,6 @@ std::string Server::_buildResponse(int fd)
     Request&        req    = _clients[fd]._request;
     ServerConfig*   config = _fd_to_config[fd];
     LocationConfig* loc    = _findLocation(config, req._path);
-
     if (!loc)
         return _makeErrorResponse(404, config);
     if (!_isMethodAllowed(loc, req._method))
@@ -175,11 +203,15 @@ std::string Server::_handleCGI(Request& req, LocationConfig* loc, ServerConfig* 
 {
     std::string cgi_bin  = loc->_cgi.at(ext);
     std::string root     = loc->_root.empty() ? config->_root : loc->_root;
-    std::string script   = root + req._path;
     struct stat st;
     int pipe_in[2];
     int pipe_out[2];
 
+    std::string rel_path = req._path;
+    if (rel_path.substr(0, loc->_path.size()) == loc->_path)
+        rel_path = rel_path.substr(loc->_path.size());
+    std::string script = root + "/" + rel_path;
+    std::cerr << "CGI script path: " << script << std::endl;
     if (stat(script.c_str(), &st) == -1)
         return _makeErrorResponse(404, config);
     if (pipe(pipe_in) == -1 || pipe(pipe_out) == -1)

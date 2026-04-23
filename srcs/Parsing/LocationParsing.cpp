@@ -29,6 +29,23 @@ void LocationParsing::parse(ServerConfig& current_server)
             current_location._index = get();
             expect(";");
         }
+        else if (directive == "upload_store")
+        {
+            current_location._upload = get();
+            expect(";");
+        }
+        else if (directive == "cgi_ext")
+        {
+            std::string ext = get();
+            std::string bin = get();
+            current_location._cgi[ext] = bin;
+            expect(";");
+        }
+        else if (directive == "return")
+        {
+            current_location._redirect = get();
+            expect(";");
+        }
         else if (directive == "autoindex")
         {
             std::string autoindex_value = get();

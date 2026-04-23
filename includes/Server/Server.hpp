@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <dirent.h>
 #include <stdlib.h>
+#include <signal.h>
 
 class Server
 {
@@ -19,8 +20,9 @@ class Server
         // constructeurs dans private pour interdire leur instanciation
         Server(const Server& copy);
         Server& operator=(const Server& copy);
-        std::vector<Socket *>               _sockets;
+
         int                                 _epoll_fd;
+        std::vector<Socket *>               _sockets;
         std::set<unsigned int>              _listen_fds;
         std::map<int, Client>               _clients;
         std::map<int, ServerConfig *>       _fd_to_config;
@@ -54,10 +56,12 @@ class Server
         void                                _runCGIChild(Request& req, ServerConfig* config, const std::string& cgi_bin, const std::string& script, int pipe_in[2], int pipe_out[2]);
 
         bool                                _isMethodAllowed(LocationConfig *, const std::string&);
+        bool                                _isRunning;
 
     public:
         Server();
         ~Server();
         void                                startServers(Config& conf);
         void                                startLoop();
+        void                                cleanup();
 };
