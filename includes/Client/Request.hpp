@@ -17,6 +17,7 @@ class Request
         std::map<std::string, std::string>  _headers;
         std::string                         _body;
         size_t                              _content_length;
+        size_t                              _header_end;
         bool                                _complete;
         bool                                _parsed_header;
 

@@ -145,6 +145,8 @@ void    Server::_handleRead(int fd)
         ev.data.fd = fd;
         epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, fd, &ev);
     }
+    std::cerr << "buffer size: " << _clients[fd]._read_buffer.size() << std::endl;
+    std::cerr << "request complete: " << _clients[fd].tryParseRequest() << std::endl;
 }
 
 void    Server::_handleWrite(int fd)
@@ -176,6 +178,8 @@ std::string Server::_buildResponse(int fd)
     if (!loc->_redirect.empty())
         return _makeRedirectResponse(loc->_redirect);
     std::string ext = _getExtension(req._path);
+    if (ext.empty() && !loc->_index.empty())
+        ext = _getExtension(loc->_index);
     if (loc->_cgi.count(ext))
         return _handleCGI(req, loc, config, ext);
     if (req._method == "GET")
@@ -201,19 +205,33 @@ std::string Server::_getExtension(const std::string& path)
 
 std::string Server::_handleCGI(Request& req, LocationConfig* loc, ServerConfig* config, const std::string& ext)
 {
-    std::string cgi_bin  = loc->_cgi.at(ext);
-    std::string root     = loc->_root.empty() ? config->_root : loc->_root;
-    struct stat st;
-    int pipe_in[2];
-    int pipe_out[2];
+    std::string cgi_bin = loc->_cgi.at(ext);
+
+    char cwd[4096];
+    if (!getcwd(cwd, sizeof(cwd)))
+        return _makeErrorResponse(500, config);
+    std::string base = std::string(cwd);
 
     std::string rel_path = req._path;
     if (rel_path.substr(0, loc->_path.size()) == loc->_path)
         rel_path = rel_path.substr(loc->_path.size());
+    if (!rel_path.empty() && rel_path[0] == '/')
+        rel_path = rel_path.substr(1);
+    if (rel_path.empty() && !loc->_index.empty())
+        rel_path = loc->_index;
+
+    std::string root = loc->_root.empty() ? config->_root : loc->_root;
+    if (!root.empty() && root[0] == '.')
+        root = base + "/" + root.substr(root[1] == '/' ? 2 : 1);
+
     std::string script = root + "/" + rel_path;
-    std::cerr << "CGI script path: " << script << std::endl;
+    std::cerr << "CGI script path absolute: " << script << std::endl;
+
+    struct stat st;
     if (stat(script.c_str(), &st) == -1)
         return _makeErrorResponse(404, config);
+    int pipe_in[2];
+    int pipe_out[2];
     if (pipe(pipe_in) == -1 || pipe(pipe_out) == -1)
         return _makeErrorResponse(500, config);
     pid_t pid = fork();
@@ -236,6 +254,12 @@ void Server::_runCGIChild(Request& req, ServerConfig* config, const std::string&
     dup2(pipe_out[1], STDOUT_FILENO);
     close(pipe_out[0]);
     close(pipe_out[1]);
+    if (_epoll_fd != -1)
+            close(_epoll_fd);
+    for (size_t i = 0; i < _sockets.size(); i++)
+            close(_sockets[i]->_sock);
+    for (std::map<int,Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+        close(it->first);
     std::vector<std::string> env_strings = _buildCGIEnv(req, config, script);
     std::vector<char*> env;
     for (size_t i = 0; i < env_strings.size(); i++)
@@ -312,6 +336,8 @@ std::string Server::_runCGIParent(Request& req, ServerConfig* config, pid_t pid,
     while ((n = read(pipe_out[0], buf, sizeof(buf))) > 0)
         cgi_output += std::string(buf, n);
     close(pipe_out[0]);
+    std::cerr << "CGI output: [" << cgi_output << "]" << std::endl;
+    std::cerr << "CGI output size: " << cgi_output.size() << std::endl;
     return _parseCGIOutput(cgi_output, config);
 }
 
@@ -320,12 +346,16 @@ std::string Server::_parseCGIOutput(const std::string& output, ServerConfig* con
     if (output.empty())
         return _makeErrorResponse(500, config);
     size_t sep = output.find("\r\n\r\n");
+    size_t skip = 4;
     if (sep == std::string::npos)
+    {
         sep = output.find("\n\n");
+        skip = 2;
+    }
     if (sep == std::string::npos)
         return _makeErrorResponse(500, config);
     std::string cgi_headers = output.substr(0, sep);
-    std::string body        = output.substr(sep + 4);
+    std::string body        = output.substr(sep + skip);
     Response resp;
     resp.setStatus(200);
     std::istringstream ss(cgi_headers);
@@ -449,8 +479,14 @@ std::string Server::_makeAutoindex(const std::string& dirpath, const std::string
 std::string Server::_handleGET(Request& req, LocationConfig* loc, ServerConfig* config)
 {
     std::string root = loc->_root.empty() ? config->_root : loc->_root;
-    std::string filepath = root + req._path;
 
+    std::string rel_path = req._path;
+    if (rel_path.substr(0, loc->_path.size()) == loc->_path)
+        rel_path = rel_path.substr(loc->_path.size());
+    if (!rel_path.empty() && rel_path[0] == '/')
+        rel_path = rel_path.substr(1);
+    std::string filepath = root + '/' + rel_path;
+    std::cerr << "GET filepath: " << filepath << std::endl;
     if (filepath[filepath.size() - 1] == '/')
     {
         if (!loc->_index.empty())
@@ -487,8 +523,13 @@ std::string Server::_handleGET(Request& req, LocationConfig* loc, ServerConfig* 
 std::string Server::_handleDELETE(Request& req, LocationConfig* loc, ServerConfig* config)
 {
     std::string root     = loc->_root.empty() ? config->_root : loc->_root;
-    std::string filepath = root + req._path;
-
+    std::string rel_path = req._path;
+    if (rel_path.substr(0, loc->_path.size()) == loc->_path)
+        rel_path = rel_path.substr(loc->_path.size());
+    if (!rel_path.empty() && rel_path[0] == '/')
+        rel_path = rel_path.substr(1);
+    std::string filepath = root + '/' + rel_path;
+    std::cerr << "DELETE filepath: " << filepath << std::endl;
     struct stat st;
     if (stat(filepath.c_str(), &st) == -1)
         return _makeErrorResponse(404, config);
@@ -503,10 +544,11 @@ std::string Server::_handleDELETE(Request& req, LocationConfig* loc, ServerConfi
 
 std::string Server::_handlePOST(Request& req, LocationConfig* loc, ServerConfig* config)
 {
-    // cas CGI — à implémenter plus tard
-    // if (!loc->_cgi.empty()) return _handleCGI(req, loc, config);
-
-    // cas upload
+    std::string ext = _getExtension(req._path);
+    if (ext.empty() && !loc->_index.empty())
+        ext = _getExtension(loc->_index);
+    if (!ext.empty() && loc->_cgi.count(ext))
+        return _handleCGI(req, loc, config, ext);
     if (!loc->_upload.empty())
         return _handleUpload(req, loc, config);
     return _makeErrorResponse(405, config);
@@ -517,6 +559,9 @@ std::string Server::_handleUpload(Request& req, LocationConfig* loc, ServerConfi
     std::string content_type = req._headers["content-type"];
     std::string body         = req._body;
 
+    std::cerr << "upload body size: " << req._body.size() << std::endl;
+    std::cerr << "max body size: " << config->_client_max_body << std::endl;
+    std::cerr << "content-type: " << req._headers["content-type"] << std::endl;
     if (body.empty())
         return _makeErrorResponse(400, config);
     struct stat st;

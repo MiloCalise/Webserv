@@ -3,9 +3,9 @@
 #include <cstdlib>
 #include <string>
 
-Request::Request() : _content_length(0), _complete(false), _parsed_header(false) {}
+Request::Request() : _content_length(0), _header_end(0), _complete(false), _parsed_header(false) {}
 
-Request::Request(const Request& copy) : _method(copy._method), _path(copy._path), _version(copy._version), _headers(copy._headers), _body(copy._body), _content_length(copy._content_length), _complete(copy._complete), _parsed_header(copy._parsed_header) {}
+Request::Request(const Request& copy) : _method(copy._method), _path(copy._path), _version(copy._version), _headers(copy._headers), _body(copy._body), _content_length(copy._content_length), _header_end(copy._header_end), _complete(copy._complete), _parsed_header(copy._parsed_header) {}
 
 Request& Request::operator=(const Request& copy)
 {
@@ -30,7 +30,6 @@ bool Request::Parse(const std::string& raw)
     {
         size_t header_end = raw.find("\r\n\r\n");
         size_t skip = 4;
-
         if (header_end == std::string::npos)
         {
             header_end = raw.find("\n\n");
@@ -52,6 +51,7 @@ bool Request::Parse(const std::string& raw)
         if (!_parseHeaders(header_section.substr(headers_start)))
             return false;
         _parsed_header = true;
+        _header_end = header_end + skip;
         if (_headers.count("content-length"))
             _content_length = std::atol(_headers["content-length"].c_str());
         if (_content_length == 0)
@@ -59,7 +59,13 @@ bool Request::Parse(const std::string& raw)
             _complete = true;
             return true;
         }
-        std::string body = raw.substr(header_end + skip);
+    }
+    if (_parsed_header && !_complete)
+    {
+        std::string body = raw.substr(_header_end);
+        std::cerr << "body_length expected: " << _content_length << std::endl;
+        std::cerr << "body received: " << body.size() << std::endl;
+
         if (body.size() >= _content_length)
         {
             _body = body.substr(0, _content_length);
