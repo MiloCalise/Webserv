@@ -559,17 +559,15 @@ std::string Server::_handleUpload(Request& req, LocationConfig* loc, ServerConfi
     std::string content_type = req._headers["content-type"];
     std::string body         = req._body;
 
-    std::cerr << "upload body size: " << req._body.size() << std::endl;
-    std::cerr << "max body size: " << config->_client_max_body << std::endl;
-    std::cerr << "content-type: " << req._headers["content-type"] << std::endl;
     if (body.empty())
         return _makeErrorResponse(400, config);
-    struct stat st;
-    if (stat(loc->_upload.c_str(), &st) == -1 || !S_ISDIR(st.st_mode))
-        return _makeErrorResponse(500, config);
     if (content_type.find("multipart/form-data") != std::string::npos)
         return _handleMultipart(req, loc, config);
-    return _saveFile(body, loc->_upload, req._path, config);
+    std::string filename = req._path;
+    size_t slash = filename.rfind('/');
+    if (slash != std::string::npos)
+        filename = filename.substr(slash + 1);
+    return _saveFile(body, loc->_upload, filename, config);
 }
 
 std::string Server::_handleMultipart(Request& req, LocationConfig* loc, ServerConfig* config)
