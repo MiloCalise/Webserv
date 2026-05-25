@@ -3,6 +3,15 @@
 #include <cstdlib>
 #include <string>
 
+static std::string trimSpaces(const std::string& value)
+{
+    size_t start = value.find_first_not_of(" \t");
+    if (start == std::string::npos)
+        return "";
+    size_t end = value.find_last_not_of(" \t");
+    return value.substr(start, end - start + 1);
+}
+
 Request::Request() : _content_length(0), _header_end(0), _complete(false), _parsed_header(false) {}
 
 Request::Request(const Request& copy) : _method(copy._method), _path(copy._path), _version(copy._version), _headers(copy._headers), _body(copy._body), _content_length(copy._content_length), _header_end(copy._header_end), _complete(copy._complete), _parsed_header(copy._parsed_header) {}
@@ -110,4 +119,27 @@ bool Request::_parseHeaders(const std::string& raw)
         _headers[key] = value;
     }
     return true;
+}
+
+std::string Request::getCookieValue(const std::string& name) const
+{
+    std::map<std::string, std::string>::const_iterator it = _headers.find("cookie");
+    if (it == _headers.end())
+        return "";
+
+    std::istringstream ss(it->second);
+    std::string token;
+
+    while (std::getline(ss, token, ';'))
+    {
+        token = trimSpaces(token);
+        size_t eq = token.find('=');
+        if (eq == std::string::npos)
+            continue;
+        std::string key = trimSpaces(token.substr(0, eq));
+        std::string value = trimSpaces(token.substr(eq + 1));
+        if (key == name)
+            return value;
+    }
+    return "";
 }

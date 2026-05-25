@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Response.hpp"
+#include "SessionManager.hpp"
 #include "../Client/Client.hpp"
 #include "../Socket/Socket.hpp"
 #include <set>
@@ -26,6 +27,7 @@ class Server
         std::set<unsigned int>              _listen_fds;
         std::map<int, Client>               _clients;
         std::map<int, ServerConfig *>       _fd_to_config;
+        SessionManager                      _sessions;
 
         std::string                         _buildResponse(int fd);
         std::string                         _makeErrorResponse(int code, ServerConfig* config);

@@ -12,6 +12,7 @@ SRCS		= srcs/main.cpp \
 			  srcs/Parsing/LocationParsing.cpp \
 			  srcs/Server/Server.cpp \
 			  srcs/Server/Response.cpp \
+			  srcs/Server/SessionManager.cpp \
 			  srcs/Client/Client.cpp \
 			  srcs/Client/Request.cpp
 

@@ -18,10 +18,10 @@ class Config
         // constructeurs dans private pour interdire leur instanciation
         Config(const Config& copy);
         Config& operator=(const Config& copy);
-        std::vector<ServerConfig> _servers;
+        std::vector<ServerConfig> _servers; // liste des serveurs configurés
     public:
         Config();
         ~Config();
         void    parseConfig(const std::string& file);
-        void    printConfig() const;
+        void    printConfig() const; //
 };

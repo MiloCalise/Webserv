@@ -1,6 +1,35 @@
 #include "../../includes/Server/Server.hpp"
 #include <sys/epoll.h>
 
+static std::string stripQuery(const std::string& path)
+{
+    size_t qpos = path.find('?');
+    if (qpos == std::string::npos)
+        return path;
+    return path.substr(0, qpos);
+}
+
+static std::string extractFormValue(const std::string& body, const std::string& key)
+{
+    size_t start = 0;
+
+    while (start < body.size())
+    {
+        size_t end = body.find('&', start);
+        if (end == std::string::npos)
+            end = body.size();
+        size_t eq = body.find('=', start);
+        if (eq != std::string::npos && eq < end)
+        {
+            std::string current_key = body.substr(start, eq - start);
+            if (current_key == key)
+                return body.substr(eq + 1, end - eq - 1);
+        }
+        start = end + 1;
+    }
+    return "";
+}
+
 Server::Server() : _epoll_fd(-1), _isRunning(false) {}
 
 Server::~Server()
@@ -478,6 +507,43 @@ std::string Server::_makeAutoindex(const std::string& dirpath, const std::string
 
 std::string Server::_handleGET(Request& req, LocationConfig* loc, ServerConfig* config)
 {
+    std::string route = stripQuery(req._path);
+
+    if (route == "/login")
+    {
+        Response resp;
+        resp.setStatus(200);
+        resp.setHeader("Content-Type", "text/html");
+        resp.setBody("<html><body><h1>Login</h1><form method=\"POST\" action=\"/login\"><input name=\"username\" placeholder=\"username\"><button type=\"submit\">Login</button></form></body></html>");
+        return resp.build();
+    }
+    if (route == "/profile")
+    {
+        std::string session_id = req.getCookieValue("session_id");
+        if (session_id.empty() || !_sessions.isValid(session_id))
+            return _makeErrorResponse(401, config);
+
+        std::string user = _sessions.getUser(session_id);
+        Response resp;
+        resp.setStatus(200);
+        resp.setHeader("Content-Type", "text/html");
+        resp.setBody("<html><body><h1>Welcome, " + user + "</h1><p>Your session is active.</p><p><a href=\"/logout\">Logout</a></p></body></html>");
+        return resp.build();
+    }
+    if (route == "/logout")
+    {
+        std::string session_id = req.getCookieValue("session_id");
+        if (!session_id.empty())
+            _sessions.destroySession(session_id);
+
+        Response resp;
+        resp.setStatus(200);
+        resp.setHeader("Content-Type", "text/html");
+        resp.setHeader("Set-Cookie", "session_id=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax");
+        resp.setBody("<html><body><h1>Logged out</h1><p>Your session cookie has been cleared.</p><p><a href=\"/login\">Login again</a></p></body></html>");
+        return resp.build();
+    }
+
     std::string root = loc->_root.empty() ? config->_root : loc->_root;
 
     std::string rel_path = req._path;
@@ -544,6 +610,27 @@ std::string Server::_handleDELETE(Request& req, LocationConfig* loc, ServerConfi
 
 std::string Server::_handlePOST(Request& req, LocationConfig* loc, ServerConfig* config)
 {
+    std::string route = stripQuery(req._path);
+
+    if (route == "/login")
+    {
+        std::string username = extractFormValue(req._body, "username");
+        if (username.empty())
+            username = extractFormValue(req._body, "user");
+        if (username.empty())
+            username = req._body;
+        if (username.empty())
+            return _makeErrorResponse(400, config);
+
+        std::string session_id = _sessions.createSession(username);
+        Response resp;
+        resp.setStatus(200);
+        resp.setHeader("Content-Type", "text/html");
+        resp.setHeader("Set-Cookie", "session_id=" + session_id + "; Path=/; HttpOnly; SameSite=Lax");
+        resp.setBody("<html><body><h1>Logged in</h1><p>Welcome, " + username + "</p><p><a href=\"/profile\">Go to profile</a></p></body></html>");
+        return resp.build();
+    }
+
     std::string ext = _getExtension(req._path);
     if (ext.empty() && !loc->_index.empty())
         ext = _getExtension(loc->_index);

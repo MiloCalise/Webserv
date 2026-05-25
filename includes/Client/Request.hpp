@@ -33,4 +33,5 @@ class Request
         ~Request();
 
         bool    Parse(const std::string& raw);
+        std::string getCookieValue(const std::string& name) const;
 };
