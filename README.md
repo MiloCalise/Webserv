@@ -100,4 +100,3 @@ The `configure.conf` file contains `server` and `location` blocks. Example direc
 - **Debugging & profiling:** Valgrind, AddressSanitizer/UBSan (use compiler flags), GDB, strace, lsof, tcpdump/wireshark.
 - **Code quality tools:** clang-format, clang-tidy, ccache.
 - **JWT Debugger.
-

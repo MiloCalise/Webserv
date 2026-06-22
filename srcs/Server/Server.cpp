@@ -443,7 +443,21 @@ std::string Server::_makeErrorResponse(int code, ServerConfig* config)
 
     if (config->_error_pages.count(code))
     {
-        std::string filepath = config->_root + config->_error_pages[code];
+        std::string root = config->_root;
+        if (root.empty())
+        {
+            for (size_t i = 0; i < config->_locations.size(); ++i)
+            {
+                if (!config->_locations[i]._root.empty())
+                {
+                    if (config->_locations[i]._path == "/" || root.empty())
+                        root = config->_locations[i]._root;
+                    if (config->_locations[i]._path == "/")
+                        break;
+                }
+            }
+        }
+        std::string filepath = root + config->_error_pages[code];
         std::ifstream file(filepath.c_str());
         if (file.is_open())
         {
