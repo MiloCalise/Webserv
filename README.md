@@ -1,6 +1,6 @@
 
 
-This project was implemented for the 42 curriculum by <miltavar> and <saibelab> and <helsnous>
+This project was implemented for the 42 curriculum by <miltavar> and <helsnous>
 
 # WebServ
 
