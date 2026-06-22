@@ -20,7 +20,7 @@ Socket::Socket(const ServerConfig& conf) : _sock(-1)
     _sock = socket(AF_INET, SOCK_STREAM, 0);
     if (_sock == -1)
         throw std::runtime_error(makeSystemError("Could not create socket"));
-
+    fcntl(_sock, F_SETFL, O_NONBLOCK);
     int reuse = 1;
     if (setsockopt(_sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1)
     {

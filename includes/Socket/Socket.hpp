@@ -2,6 +2,7 @@
 
 #include "../Config/Config.hpp"
 #include <unistd.h>
+#include <fcntl.h>
 
 class   Socket
 {

@@ -67,13 +67,13 @@ void    Server::startLoop()
 {
     struct epoll_event events[64];
     _isRunning = true;
-    while (1)
+    while (_isRunning)
     {
         int nb = epoll_wait(_epoll_fd, events, 64, -1);
         if (nb == -1)
         {
             if (errno == EINTR)
-                return ;
+                break ;
             throw std::runtime_error("Error in epoll wait");
         }
         for (int i = 0; i < nb; i++)
@@ -137,20 +137,23 @@ void Server::_checkTimeouts()
 
 void    Server::_handleAccept(int fd)
 {
-    int client_fd = accept(fd, NULL, NULL);
-    if (client_fd == -1)
-        return ;
-    fcntl(client_fd, F_SETFL, O_NONBLOCK);
-    struct epoll_event ev;
-    ev.events = EPOLLIN;
-    ev.data.fd = client_fd;
-    if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, client_fd, &ev) == -1)
+    while (true)
     {
-        close(client_fd);
-        return;
+        int client_fd = accept(fd, NULL, NULL);
+        if (client_fd == -1)
+            break; // Plus de connexions en attente (retourne EAGAIN ou EWOULDBLOCK)
+        fcntl(client_fd, F_SETFL, O_NONBLOCK);
+        struct epoll_event ev;
+        ev.events = EPOLLIN;
+        ev.data.fd = client_fd;
+        if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, client_fd, &ev) == -1)
+        {
+            close(client_fd);
+            continue; // Passe à la connexion suivante sans stopper l'acceptation
+        }
+        _clients[client_fd] = Client(client_fd, _fd_to_config[fd]);
+        _fd_to_config[client_fd] = _fd_to_config[fd];
     }
-    _clients[client_fd] = Client(client_fd, _fd_to_config[fd]);
-    _fd_to_config[client_fd] = _fd_to_config[fd];
 }
 
 void    Server::_handleRead(int fd)
@@ -170,18 +173,23 @@ void    Server::_handleRead(int fd)
         std::string response = _buildResponse(fd);
         _clients[fd].setWriteBuffer(response);
         struct epoll_event ev;
-        ev.events = EPOLLOUT;
+        ev.events = EPOLLIN | EPOLLOUT;
         ev.data.fd = fd;
         epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, fd, &ev);
     }
-    std::cerr << "buffer size: " << _clients[fd]._read_buffer.size() << std::endl;
-    std::cerr << "request complete: " << _clients[fd].tryParseRequest() << std::endl;
 }
 
 void    Server::_handleWrite(int fd)
 {
     ssize_t sent = _clients[fd].sendChunk();
-    if (sent == -1 || !_clients[fd].hasDataToSend())
+    if (sent == -1)
+    {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+            return;
+        _handleClose(fd);
+        return;
+    }
+    if (!_clients[fd].hasDataToSend())
         _handleClose(fd);
 }
 
@@ -476,11 +484,11 @@ std::string Server::_makeRedirectResponse(const std::string& url)
     return resp.build();
 }
 
-std::string Server::_makeAutoindex(const std::string& dirpath, const std::string& urlpath)
+std::string Server::_makeAutoindex(const std::string& dirpath, const std::string& urlpath, ServerConfig* config)
 {
     DIR* dir = opendir(dirpath.c_str());
     if (!dir)
-        return _makeErrorResponse(403, NULL);
+        return _makeErrorResponse(403, config);
     std::ostringstream body;
     body << "<html><head><title>Index of " << urlpath << "</title></head><body>";
     body << "<h1>Index of " << urlpath << "</h1><hr><pre>";
@@ -558,7 +566,7 @@ std::string Server::_handleGET(Request& req, LocationConfig* loc, ServerConfig* 
         if (!loc->_index.empty())
             filepath += loc->_index;
         else if (loc->_autoindex)
-            return _makeAutoindex(filepath, req._path);
+            return _makeAutoindex(filepath, req._path, config);
         else
             return _makeErrorResponse(403, config);
     }
@@ -568,7 +576,7 @@ std::string Server::_handleGET(Request& req, LocationConfig* loc, ServerConfig* 
     if (S_ISDIR(st.st_mode))
     {
         if (loc->_autoindex)
-            return _makeAutoindex(filepath, req._path);
+            return _makeAutoindex(filepath, req._path, config);
         return _makeErrorResponse(403, config);
     }
     std::ifstream file(filepath.c_str(), std::ios::binary);

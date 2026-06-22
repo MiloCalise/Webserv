@@ -37,7 +37,7 @@ class Server
         std::string                         _handlePOST(Request& req, LocationConfig* loc, ServerConfig* config);
         std::string                         _handleUpload(Request& req, LocationConfig* loc, ServerConfig* config);
         std::string                         _handleMultipart(Request& req, LocationConfig* loc, ServerConfig* config);
-        std::string                         _makeAutoindex(const std::string& dirpath, const std::string& urlpath);
+        std::string                         _makeAutoindex(const std::string& dirpath, const std::string& urlpath, ServerConfig* config);
         std::string                         _extractFilename(const std::string& headers);
         std::string                         _saveFile(const std::string& content, const std::string& upload_store, const std::string& filename, ServerConfig* config);
         std::string                         _getExtension(const std::string& path);
